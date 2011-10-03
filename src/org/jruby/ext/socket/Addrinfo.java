@@ -31,28 +31,31 @@ import static jnr.constants.platform.AddressFamily.AF_INET;
 import static jnr.constants.platform.AddressFamily.AF_INET6;
 import static jnr.constants.platform.IPProto.IPPROTO_TCP;
 import static jnr.constants.platform.IPProto.IPPROTO_UDP;
-import static jnr.constants.platform.NameInfo.NI_NUMERICHOST;
-import static jnr.constants.platform.NameInfo.NI_NUMERICSERV;
 import static jnr.constants.platform.ProtocolFamily.PF_INET;
 import static jnr.constants.platform.ProtocolFamily.PF_INET6;
 import static jnr.constants.platform.Sock.SOCK_DGRAM;
 import static jnr.constants.platform.Sock.SOCK_STREAM;
 
 import java.net.InetAddress;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.UnknownHostException;
 
 import org.jruby.Ruby;
+import org.jruby.RubyBoolean;
 import org.jruby.RubyClass;
 import org.jruby.RubyObject;
 import org.jruby.RubyNumeric;
+import org.jruby.RubyString;
 import org.jruby.anno.JRubyClass;
 import org.jruby.anno.JRubyMethod;
 import org.jruby.exceptions.RaiseException;
+import org.jruby.runtime.Block;
 import org.jruby.runtime.ObjectAllocator;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 
-@JRubyClass(name="Addrinfo")
+@JRubyClass(name = "Addrinfo")
 public class Addrinfo extends RubyObject {
 
     private static final ObjectAllocator ADDRINFO_ALLOCATOR = new ObjectAllocator() {
@@ -63,35 +66,58 @@ public class Addrinfo extends RubyObject {
 
     static void createAddrinfo(Ruby runtime) {
         RubyClass result = runtime.defineClass("Addrinfo", runtime.getObject(), ADDRINFO_ALLOCATOR);
-        result.setReifiedClass(Addrinfo.class);
         result.defineAnnotatedMethods(Addrinfo.class);
     }
 
     public Addrinfo(Ruby runtime, RubyClass klass) {
         super(runtime, klass);
     }
-
-    public Addrinfo(Ruby runtime, InetAddress address, int port, int family, int socket_type, int protocol) {
+    
+    public Addrinfo(Ruby runtime, InetAddress address, int port, int family, int pfamily, int protocol, int socktype) {
         super(runtime, runtime.getClass("Addrinfo"));
-        this.address = address;
-        this.port = port;
-        this.family = family;
-        this.socket_type = socket_type;
+        this.address  = address;
+        this.port     = port;
+        this.family   = family;
+        this.pfamily  = pfamily;
         this.protocol = protocol;
+        this.socktype = socktype;
     }
 
     private InetAddress address;
     private int port;
     private int family;
-    private int socket_type;
+    private int pfamily;
     private int protocol;
+    private int socktype;
 
     @JRubyMethod(meta = true)
     public static IRubyObject ip(IRubyObject self, IRubyObject arg) {
         Ruby runtime = self.getRuntime();
         try {
             String host = arg.convertToString().toString();
-            return new Addrinfo(runtime, InetAddress.getByName(host), 0, AF_INET.intValue(), 0, 0);
+            return new Addrinfo(runtime, InetAddress.getByName(host), 0, AF_INET.intValue(), PF_INET.intValue(), 0, 0);
+        } catch (UnknownHostException e) {
+            throw new RaiseException(
+                runtime, runtime.getClass("SocketError"), "getaddrinfo: Name or service not known", true);
+        }
+    }
+
+    // TODO; Implement #new
+
+    @JRubyMethod(meta = true)
+    public static IRubyObject tcp(IRubyObject self, IRubyObject arg0, IRubyObject arg1) {
+        Ruby runtime = self.getRuntime();
+
+        try {
+            InetAddress host = InetAddress.getByName(arg0.convertToString().toString());
+            int port     = RubyNumeric.num2int(arg1);
+            int family   = AF_INET.intValue();
+            int pfamily  = PF_INET.intValue();
+            int protocol = IPPROTO_TCP.intValue();
+            int socktype = SOCK_STREAM.intValue();
+
+            return new Addrinfo(runtime, host, port, family, pfamily, protocol, socktype);
+
         } catch (UnknownHostException e) {
             throw new RaiseException(
                 runtime, runtime.getClass("SocketError"), "getaddrinfo: Name or service not known", true);
@@ -99,13 +125,23 @@ public class Addrinfo extends RubyObject {
     }
 
     @JRubyMethod(meta = true)
-    public static IRubyObject tcp(IRubyObject self, IRubyObject host, IRubyObject port) {
-        throw new UnsupportedOperationException();
-    }
+    public static IRubyObject udp(IRubyObject self, IRubyObject arg0, IRubyObject arg1) {
+        Ruby runtime = self.getRuntime();
 
-    @JRubyMethod(meta = true)
-    public static IRubyObject udp(IRubyObject self, IRubyObject host, IRubyObject port) {
-        throw new UnsupportedOperationException();
+        try {
+            InetAddress host = InetAddress.getByName(arg0.convertToString().toString());
+            int port     = RubyNumeric.num2int(arg1);
+            int family   = AF_INET.intValue();
+            int pfamily  = PF_INET.intValue();
+            int protocol = IPPROTO_UDP.intValue();
+            int socktype = SOCK_DGRAM.intValue();
+
+            return new Addrinfo(runtime, host, port, family, pfamily, protocol, socktype);
+
+        } catch (UnknownHostException e) {
+            throw new RaiseException(
+                runtime, runtime.getClass("SocketError"), "getaddrinfo: Name or service not known", true);
+        }
     }
 
     @JRubyMethod(meta = true, required = 1, optional = 1)
@@ -117,4 +153,228 @@ public class Addrinfo extends RubyObject {
     public RubyNumeric afamily(ThreadContext ctx) {
         return RubyNumeric.int2fix(ctx.getRuntime(), family);
     }
+
+    @JRubyMethod
+    public void bind(ThreadContext ctx, Block block) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod
+    public IRubyObject canonname(ThreadContext ctx) {
+        return RubyString.newString(ctx.getRuntime(), address.getCanonicalHostName());
+    }
+
+    @JRubyMethod
+    public void connect(ThreadContext ctx, Block block) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod(rest = true)
+    public IRubyObject connect_from(ThreadContext ctx, IRubyObject[] args, Block block) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod(rest = true)
+    public IRubyObject connect_to(ThreadContext ctx, IRubyObject[] args, Block block) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod(rest = true)
+    public IRubyObject family_addrinfo(ThreadContext ctx, IRubyObject[] args) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod
+    public IRubyObject getnameinfo(ThreadContext ctx) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod
+    public IRubyObject getnameinfo(ThreadContext ctx, IRubyObject self, IRubyObject flags) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod
+    public IRubyObject inspect(ThreadContext ctx) {
+        // TODO: Do better here
+        return RubyString.newString(ctx.getRuntime(), address.toString ());
+    }
+
+    @JRubyMethod
+    public IRubyObject inspect_sockaddr(ThreadContext ctx) {
+        // TODO: Do better here
+        return RubyString.newString(ctx.getRuntime(), address.toString ());
+    }
+
+    @JRubyMethod(name = "ip?")
+    public IRubyObject is_ip(ThreadContext ctx) {
+        // TODO: Support Unix Domain Sockets for later
+        return RubyBoolean.newBoolean(ctx.getRuntime(), true);
+    }
+
+    @JRubyMethod
+    public IRubyObject ip_address(ThreadContext ctx) {
+        // TODO: Support Unix Domain Sockets for later
+        return RubyString.newString(ctx.getRuntime(), address.getHostAddress());
+    }
+
+    @JRubyMethod
+    public IRubyObject ip_port(ThreadContext ctx) {
+        return RubyNumeric.int2fix(ctx.getRuntime(), port);
+    }
+
+    @JRubyMethod
+    public IRubyObject ip_unpack(ThreadContext ctx) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod(name = "ipv4?")
+    public IRubyObject is_ipv4(ThreadContext ctx) {
+        boolean result = address instanceof Inet4Address;
+        return RubyBoolean.newBoolean(ctx.getRuntime(), result);
+    }
+
+    @JRubyMethod(name = "ipv4_loopback?")
+    public IRubyObject is_ipv4_loopback(ThreadContext ctx) {
+        boolean ipv4   = address instanceof Inet4Address;
+        boolean result = ipv4 && address.isLoopbackAddress();
+        return RubyBoolean.newBoolean(ctx.getRuntime(), result);
+    }
+
+    @JRubyMethod(name = "ipv4_multicast?")
+    public IRubyObject is_ipv4_multicast(ThreadContext ctx) {
+        boolean ipv4   = address instanceof Inet4Address;
+        boolean result = ipv4 && address.isMulticastAddress();
+        return RubyBoolean.newBoolean(ctx.getRuntime(), result);
+    }
+
+    @JRubyMethod(name = "ipv4_private?")
+    public IRubyObject is_ipv4_private(ThreadContext ctx) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod(name = "ipv6?")
+    public IRubyObject is_ipv6(ThreadContext ctx) {
+        boolean result = address instanceof Inet6Address;
+        return RubyBoolean.newBoolean(ctx.getRuntime(), result);
+    }
+
+    @JRubyMethod(name = "ipv6_linklocal?")
+    public IRubyObject is_ipv6_linklocal(ThreadContext ctx) {
+        boolean ipv6   = address instanceof Inet6Address;
+        boolean result = ipv6 && address.isLinkLocalAddress();
+        return RubyBoolean.newBoolean(ctx.getRuntime(), result);
+    }
+
+    @JRubyMethod(name = "ipv6_loopback?")
+    public IRubyObject is_ipv6_loopback(ThreadContext ctx) {
+        boolean ipv6   = address instanceof Inet6Address;
+        boolean result = ipv6 && address.isLoopbackAddress();
+        return RubyBoolean.newBoolean(ctx.getRuntime(), result);
+    }
+
+    @JRubyMethod(name = "ipv6_mc_global?")
+    public IRubyObject is_ipv6_mc_global(ThreadContext ctx) {
+        boolean ipv6   = address instanceof Inet6Address;
+        boolean result = ipv6 && address.isMCGlobal();
+        return RubyBoolean.newBoolean(ctx.getRuntime(), result);
+    }
+
+    @JRubyMethod(name = "ipv6_mc_linklocal?")
+    public IRubyObject is_ipv6_mc_linklocal(ThreadContext ctx) {
+        boolean ipv6   = address instanceof Inet6Address;
+        boolean result = ipv6 && address.isMCLinkLocal();
+        return RubyBoolean.newBoolean(ctx.getRuntime(), result);
+    }
+
+    @JRubyMethod(name = "ipv6_mc_nodelocal?")
+    public IRubyObject is_ipv6_mc_nodelocal(ThreadContext ctx) {
+        boolean ipv6   = address instanceof Inet6Address;
+        boolean result = ipv6 && address.isMCNodeLocal();
+        return RubyBoolean.newBoolean(ctx.getRuntime(), result);
+    }
+
+    @JRubyMethod(name = "ipv6_mc_orglocal?")
+    public IRubyObject is_ipv6_mc_orglocal(ThreadContext ctx) {
+        boolean ipv6   = address instanceof Inet6Address;
+        boolean result = ipv6 && address.isMCOrgLocal();
+        return RubyBoolean.newBoolean(ctx.getRuntime(), result);
+    }
+
+    @JRubyMethod(name = "ipv6_mc_sitelocal?")
+    public IRubyObject is_ipv6_mc_sitelocal(ThreadContext ctx) {
+        boolean ipv6   = address instanceof Inet6Address;
+        boolean result = ipv6 && address.isMCSiteLocal();
+        return RubyBoolean.newBoolean(ctx.getRuntime(), result);
+    }
+
+    @JRubyMethod(name = "ipv6_multicast?")
+    public IRubyObject is_ipv6_multicast(ThreadContext ctx) {
+        boolean ipv6   = address instanceof Inet6Address;
+        boolean result = ipv6 && address.isMulticastAddress();
+        return RubyBoolean.newBoolean(ctx.getRuntime(), result);
+    }
+
+    @JRubyMethod(name = "ipv6_sitelocal?")
+    public IRubyObject is_ipv6_sitelocal(ThreadContext ctx) {
+        boolean ipv6   = address instanceof Inet6Address;
+        boolean result = ipv6 && address.isSiteLocalAddress();
+        return RubyBoolean.newBoolean(ctx.getRuntime(), result);
+    }
+
+    @JRubyMethod
+    public IRubyObject ipv6_to_ipv4(ThreadContext ctx) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod(name = "ipv6_unspecified?")
+    public IRubyObject is_ipv6_unspecified(ThreadContext ctx) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod(name = "ipv6_v4compat?")
+    public IRubyObject is_ipv6_v4compat(ThreadContext ctx) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod(name = "ipv6_v4mapped?")
+    public IRubyObject is_ipv6_v4mapped(ThreadContext ctx) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod(optional = 1)
+    public IRubyObject listen(ThreadContext ctx, IRubyObject arg, Block block) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod
+    public IRubyObject pfamily(ThreadContext ctx) {
+        return RubyNumeric.int2fix(ctx.getRuntime(), pfamily);
+    }
+
+    @JRubyMethod
+    public IRubyObject protocol(ThreadContext ctx) {
+        return RubyNumeric.int2fix(ctx.getRuntime(), protocol);
+    }
+    
+    @JRubyMethod
+    public IRubyObject socktype(ThreadContext ctx) {
+        return RubyNumeric.int2fix(ctx.getRuntime(), socktype);
+    }
+
+    @JRubyMethod
+    public IRubyObject to_sockaddr(ThreadContext ctx) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod(name = "unix?")
+    public IRubyObject is_unix(ThreadContext ctx) {
+        // TODO: Unsupported for now
+        return RubyBoolean.newBoolean(ctx.getRuntime(), false);
+    }
+
+    @JRubyMethod
+    public IRubyObject unix_path(ThreadContext ctx) {
+        throw new UnsupportedOperationException();
+    }    
 }

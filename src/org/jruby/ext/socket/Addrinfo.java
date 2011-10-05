@@ -219,8 +219,8 @@ public class Addrinfo extends RubyObject {
 
     @JRubyMethod
     public IRubyObject inspect_sockaddr(ThreadContext ctx) {
-        // TODO: Do better here
-        return RubyString.newString(ctx.getRuntime(), address.toString ());
+        String s = String.format("%s:%d", address.getHostAddress(), port);
+        return RubyString.newString(ctx.getRuntime(), s);
     }
 
     @JRubyMethod(name = "ip?")

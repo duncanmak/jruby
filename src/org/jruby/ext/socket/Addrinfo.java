@@ -365,8 +365,15 @@ public class Addrinfo extends RubyObject {
         throw new UnsupportedOperationException();
     }
 
-    @JRubyMethod(optional = 1)
-    public IRubyObject listen(ThreadContext ctx, IRubyObject arg, Block block) {
+    @JRubyMethod
+    public IRubyObject listen(ThreadContext ctx, Block block) {
+        IRubyObject backlog = RubyNumeric.int2fix(ctx.getRuntime(), 5);
+        return listen(ctx, backlog, block);
+    }
+
+    @JRubyMethod
+    public IRubyObject listen(ThreadContext ctx, IRubyObject arg0, Block block) {
+        int backlog = RubyNumeric.fix2int(arg0);
         throw new UnsupportedOperationException();
     }
 

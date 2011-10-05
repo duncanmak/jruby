@@ -42,6 +42,7 @@ import java.net.Inet6Address;
 import java.net.UnknownHostException;
 
 import org.jruby.Ruby;
+import org.jruby.RubyArray;
 import org.jruby.RubyBoolean;
 import org.jruby.RubyClass;
 import org.jruby.RubyObject;
@@ -225,7 +226,7 @@ public class Addrinfo extends RubyObject {
 
     @JRubyMethod
     public IRubyObject ip_unpack(ThreadContext ctx) {
-        throw new UnsupportedOperationException();
+        return RubyArray.newArrayLight(ctx.getRuntime(), ip_address(ctx), ip_port(ctx));
     }
 
     @JRubyMethod(name = "ipv4?")

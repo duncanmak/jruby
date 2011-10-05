@@ -105,8 +105,14 @@ public class Addrinfo extends RubyObject {
     public static IRubyObject ip(IRubyObject self, IRubyObject arg) {
         Ruby runtime = self.getRuntime();
         try {
-            String host = arg.convertToString().toString();
-            return new Addrinfo(runtime, InetAddress.getByName(host), 0, AF_INET.intValue(), PF_INET.intValue(), 0, 0);
+            InetAddress host = InetAddress.getByName(arg.convertToString().toString());
+            int port     = 0;
+            int family   = AF_INET.intValue();
+            int pfamily  = PF_INET.intValue();
+            int protocol = 0;
+            int socktype = 0;
+
+            return new Addrinfo(runtime, host, port, family, pfamily, protocol, socktype);
         } catch (UnknownHostException e) {
             throw new RaiseException(
                 runtime, runtime.getClass("SocketError"), "getaddrinfo: Name or service not known", true);

@@ -91,6 +91,16 @@ public class Addrinfo extends RubyObject {
     private int protocol;
     private int socktype;
 
+    @JRubyMethod(meta = true, rest = true, required = 2, optional = 4)
+    public static IRubyObject foreach(IRubyObject self, IRubyObject[] args, Block block) {
+        throw new UnsupportedOperationException();
+    }
+    
+    @JRubyMethod(meta = true, rest = true, required = 2, optional = 4)
+    public static IRubyObject getaddrinfo(IRubyObject self, IRubyObject[] args, Block block) {
+        throw new UnsupportedOperationException();
+    }
+    
     @JRubyMethod(meta = true)
     public static IRubyObject ip(IRubyObject self, IRubyObject arg) {
         Ruby runtime = self.getRuntime();

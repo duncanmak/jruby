@@ -31,6 +31,8 @@ import static jnr.constants.platform.AddressFamily.AF_INET;
 import static jnr.constants.platform.AddressFamily.AF_INET6;
 import static jnr.constants.platform.IPProto.IPPROTO_TCP;
 import static jnr.constants.platform.IPProto.IPPROTO_UDP;
+import static jnr.constants.platform.NameInfo.NI_NUMERICHOST;
+import static jnr.constants.platform.NameInfo.NI_NUMERICSERV;
 import static jnr.constants.platform.ProtocolFamily.PF_INET;
 import static jnr.constants.platform.ProtocolFamily.PF_INET6;
 import static jnr.constants.platform.Sock.SOCK_DGRAM;
@@ -202,13 +204,17 @@ public class Addrinfo extends RubyObject {
     }
 
     @JRubyMethod
-    public IRubyObject getnameinfo(ThreadContext ctx) {
-        throw new UnsupportedOperationException();
-    }
+    public IRubyObject getnameinfo(ThreadContext ctx) { return getnameinfo(ctx, 0); }
 
     @JRubyMethod
-    public IRubyObject getnameinfo(ThreadContext ctx, IRubyObject self, IRubyObject flags) {
-        throw new UnsupportedOperationException();
+    public IRubyObject getnameinfo(ThreadContext ctx, IRubyObject flags) {
+        return getnameinfo(ctx, flags.isNil() ? 0 : RubyNumeric.num2int(flags));
+    }
+
+    IRubyObject getnameinfo(ThreadContext ctx, int flags) {
+        IRubyObject host = ip_address(ctx);
+        IRubyObject port = RubyString.newString(ctx.getRuntime(), Integer.toString(this.port));
+        return RubyArray.newArrayLight(ctx.getRuntime(), host, port);
     }
 
     @JRubyMethod

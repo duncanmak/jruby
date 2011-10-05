@@ -763,6 +763,8 @@ public class RubySocket extends RubyBasicSocket {
                     throw runtime.newArgumentError("invalid address string");
                 }
             }
+        } else if (arg0 instanceof Addrinfo) {
+            return ((Addrinfo) arg0).getnameinfo(context, flags);
         } else {
             throw runtime.newArgumentError("invalid args");
         }

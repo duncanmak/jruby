@@ -41,6 +41,7 @@ import static jnr.constants.platform.Sock.SOCK_STREAM;
 import java.net.InetAddress;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 import org.jruby.Ruby;
@@ -390,6 +391,12 @@ public class Addrinfo extends RubyObject {
     @JRubyMethod
     public IRubyObject socktype(ThreadContext ctx) {
         return RubyNumeric.int2fix(ctx.getRuntime(), socktype);
+    }
+
+    @JRubyMethod(name = {"to_s", "to_str"})
+    public IRubyObject to_s(ThreadContext ctx) {
+        InetSocketAddress sock = new InetSocketAddress(address, port);
+        return RubySocket.pack_sockaddr_in(ctx, sock);
     }
 
     @JRubyMethod

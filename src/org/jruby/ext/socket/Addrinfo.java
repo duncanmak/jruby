@@ -75,7 +75,7 @@ public class Addrinfo extends RubyObject {
     public Addrinfo(Ruby runtime, RubyClass klass) {
         super(runtime, klass);
     }
-    
+
     public Addrinfo(Ruby runtime, InetAddress address, int port, int family, int pfamily, int protocol, int socktype) {
         super(runtime, runtime.getClass("Addrinfo"));
         this.address  = address;
@@ -97,12 +97,12 @@ public class Addrinfo extends RubyObject {
     public static IRubyObject foreach(IRubyObject self, IRubyObject[] args, Block block) {
         throw new UnsupportedOperationException();
     }
-    
+
     @JRubyMethod(meta = true, rest = true, required = 2, optional = 4)
     public static IRubyObject getaddrinfo(IRubyObject self, IRubyObject[] args, Block block) {
         throw new UnsupportedOperationException();
     }
-    
+
     @JRubyMethod(meta = true)
     public static IRubyObject ip(IRubyObject self, IRubyObject arg) {
         Ruby runtime = self.getRuntime();
@@ -386,7 +386,7 @@ public class Addrinfo extends RubyObject {
     public IRubyObject protocol(ThreadContext ctx) {
         return RubyNumeric.int2fix(ctx.getRuntime(), protocol);
     }
-    
+
     @JRubyMethod
     public IRubyObject socktype(ThreadContext ctx) {
         return RubyNumeric.int2fix(ctx.getRuntime(), socktype);
@@ -406,5 +406,5 @@ public class Addrinfo extends RubyObject {
     @JRubyMethod
     public IRubyObject unix_path(ThreadContext ctx) {
         throw new UnsupportedOperationException();
-    }    
+    }
 }

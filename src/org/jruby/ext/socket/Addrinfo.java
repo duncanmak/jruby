@@ -250,7 +250,10 @@ public class Addrinfo extends RubyObject {
 
     @JRubyMethod
     public IRubyObject inspect_sockaddr(ThreadContext ctx) {
-        String s = String.format("%s:%d", address.getHostAddress(), port);
+        String addr = (address instanceof Inet6Address) ?
+            compressIPv6Address(address.getHostAddress()) :
+            address.getHostAddress();
+        String s = String.format("%s:%d", addr, port);
         return RubyString.newString(ctx.getRuntime(), s);
     }
 
@@ -437,5 +440,9 @@ public class Addrinfo extends RubyObject {
     @JRubyMethod
     public IRubyObject unix_path(ThreadContext ctx) {
         throw new UnsupportedOperationException();
+    }
+
+    private String compressIPv6Address (String s) {
+        return s.replaceAll("((?::0\\b){2,}):?(?!\\S*\\b\\1:0\\b)(\\S*)", "::$2");
     }
 }

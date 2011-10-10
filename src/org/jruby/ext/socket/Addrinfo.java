@@ -77,6 +77,10 @@ public class Addrinfo extends RubyObject {
         super(runtime, klass);
     }
 
+    public Addrinfo(Ruby runtime, String host, int port) {
+        this(runtime, InetAddress.getByName(host), port, 0, 0, 0, 0);
+    }
+
     public Addrinfo(Ruby runtime, InetAddress address, int port, int family, int pfamily, int protocol, int socktype) {
         super(runtime, runtime.getClass("Addrinfo"));
         this.address  = address;
@@ -100,8 +104,28 @@ public class Addrinfo extends RubyObject {
     }
 
     @JRubyMethod(meta = true, rest = true, required = 2, optional = 4)
-    public static IRubyObject getaddrinfo(IRubyObject self, IRubyObject[] args, Block block) {
-        throw new UnsupportedOperationException();
+    public static IRubyObject[] getaddrinfo(IRubyObject self, IRubyObject[] args) {
+        Ruby runtime = self.getRuntime();
+        try {
+            String nodename = args[0].convertToString().toString();
+            int port        = RubyNumeric.fix2int(args[1]);
+            int family      = (args.length == 3) ? RubyNumeric.fix2int(args[2]) : 0;
+            int socktype    = (args.length == 4) ? RubyNumeric.fix2int(args[3]) : 0;
+            int protocol    = (args.length == 5) ? RubyNumeric.fix2int(args[4]) : 0;
+            int flags       = (args.length == 6) ? RubyNumeric.fix2int(args[5]) : 0;
+
+            InetAddress[] addresses = InetAddress.getAllByName(nodename);
+            IRubyObject[] result    = new IRubyObject[addresses.length];
+
+            for (int i = 0; i < addresses.length; i++) {
+                result[i] = new Addrinfo(runtime, addresses[i], port, family, 0, protocol, socktype);
+            }
+
+            return result;
+        } catch (UnknownHostException e) {
+            throw new RaiseException(
+                runtime, runtime.getClass("SocketError"), "getaddrinfo: Name or service not known", true);
+        }
     }
 
     @JRubyMethod(meta = true)

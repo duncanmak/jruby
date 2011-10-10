@@ -104,7 +104,7 @@ public class Addrinfo extends RubyObject {
     }
 
     @JRubyMethod(meta = true, rest = true, required = 2, optional = 4)
-    public static IRubyObject[] getaddrinfo(IRubyObject self, IRubyObject[] args) {
+    public static IRubyObject getaddrinfo(IRubyObject self, IRubyObject[] args) {
         Ruby runtime = self.getRuntime();
         try {
             String nodename = args[0].convertToString().toString();
@@ -115,13 +115,13 @@ public class Addrinfo extends RubyObject {
             int flags       = (args.length == 6) ? RubyNumeric.fix2int(args[5]) : 0;
 
             InetAddress[] addresses = InetAddress.getAllByName(nodename);
-            IRubyObject[] result    = new IRubyObject[addresses.length];
-
+            Addrinfo[] addrinfos    = new Addrinfo[addresses.length];
+                                                
             for (int i = 0; i < addresses.length; i++) {
-                result[i] = new Addrinfo(runtime, addresses[i], port, family, 0, protocol, socktype);
+                addrinfos[i] = new Addrinfo(runtime, addresses[i], port, family, 0, protocol, socktype);
             }
-
-            return result;
+            
+            return RubyArray.newArray(runtime, addrinfos);
         } catch (UnknownHostException e) {
             throw new RaiseException(
                 runtime, runtime.getClass("SocketError"), "getaddrinfo: Name or service not known", true);

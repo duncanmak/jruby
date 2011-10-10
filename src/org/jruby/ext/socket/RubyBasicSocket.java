@@ -761,4 +761,20 @@ public class RubyBasicSocket extends RubyIO {
     private Channel getOpenChannel() throws BadDescriptorException {
         return getOpenFileChecked().getMainStreamSafe().getDescriptor().getChannel();
     }
+
+    @JRubyMethod    
+    public IRubyObject connect_address(ThreadContext ctx) {
+        // IRubyObject sockaddr = getsockname(ctx);
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod    
+    public IRubyObject local_address(ThreadContext ctx) {
+        throw new UnsupportedOperationException();
+    }
+
+    @JRubyMethod    
+    public IRubyObject remote_address(ThreadContext ctx) {
+        throw new UnsupportedOperationException();
+    }
 }// RubyBasicSocket

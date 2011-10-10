@@ -77,7 +77,7 @@ public class Addrinfo extends RubyObject {
         super(runtime, klass);
     }
 
-    public Addrinfo(Ruby runtime, String host, int port) {
+    public Addrinfo(Ruby runtime, String host, int port) throws UnknownHostException {
         this(runtime, InetAddress.getByName(host), port, 0, 0, 0, 0);
     }
 
